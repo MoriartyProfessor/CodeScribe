@@ -41,6 +41,11 @@ SourceObject* create_source(MetaData *meta_data)
         meta_data->find_entries_n = 0;
         meta_data->find_entry_curr = 0;
         meta_data->find_entries = (gchar**)malloc(sizeof(gchar*)*MAX_FIND_ENTRIES);
+        for(int i=0;i<MAX_FIND_ENTRIES;++i)
+        {
+            meta_data->find_entries[i] = (gchar*)malloc(sizeof(gchar)*MAX_ENTRY_CHAR);
+        }
+        meta_data->tab_width = 5;
     }
 
     buffer = gtk_source_buffer_new_with_language(meta_data->lang);
@@ -64,6 +69,7 @@ SourceObject* create_source(MetaData *meta_data)
     gtk_text_view_set_justification((GtkTextView*)source_object->textview, meta_data->justify);
 
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(source_object->textview), TRUE);
+    gtk_source_view_set_tab_width(GTK_SOURCE_VIEW(source_object->textview), meta_data->tab_width);
     gtk_source_view_set_highlight_current_line (GTK_SOURCE_VIEW(source_object->textview), TRUE);
     gtk_source_view_set_auto_indent(GTK_SOURCE_VIEW(source_object->textview), TRUE);
 

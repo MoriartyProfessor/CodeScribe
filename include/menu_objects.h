@@ -8,7 +8,8 @@
 #include <gtksourceview/gtksourcelanguagemanager.h>
 #include <gtksourceview-3.0/gtksourceview/gtksourcestyleschememanager.h>
 
-#define MAX_FIND_ENTRIES 20
+#define MAX_FIND_ENTRIES 3
+#define MAX_ENTRY_CHAR 255
 
 typedef struct
 {
@@ -61,6 +62,7 @@ typedef struct
     GtkWidget* line_numbers_mi;
     GtkWidget* visualize_spaces_mi;
     GtkWidget* wrap_words_mi;
+    GtkWidget* tab_width_head_mi;
     GtkWidget* justify_left_mi;
     GtkWidget* justify_right_mi;
     GtkWidget* justify_center_mi;
@@ -150,6 +152,7 @@ typedef struct
     gboolean regex_option;
     gboolean case_sense_option;
 
+    gint tab_width;
     PangoFontDescription* font_desc;
     GtkSourceLanguage* lang;
     GtkSourceLanguageManager* lang_manager;

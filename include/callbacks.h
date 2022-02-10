@@ -23,6 +23,15 @@ void dummy_callback(GtkMenuItem *menu_item, MetaData* meta_data)
     g_printf("Not yet implemented\n");
 }
 
+void tab_width_menu_callback(GtkMenuItem *menu_item, MetaData* meta_data)
+{
+    gchar text[] = {"Tab width: "};
+    gchar* label = gtk_menu_item_get_label(menu_item);
+    gint width = label[strlen(text)] - '0';
+    meta_data->tab_width = width;
+    apply_tab_width(meta_data);
+}
+
 void new_file_callback(GtkMenuItem *menu_item, MetaData* meta_data)
 {
     SourceObject* source_object;
@@ -31,6 +40,8 @@ void new_file_callback(GtkMenuItem *menu_item, MetaData* meta_data)
     GtkWidget* statusbar_language;
     GtkWidget* statusbar_shell;
     GtkWidget* statusbar_font;
+    GtkWidget* statusbar_tab_width;
+    GtkWidget* tab_width_menu;
     GtkWidget* statusbox;
     GtkWidget* status_align;
     GtkWidget* buffer;
@@ -47,10 +58,6 @@ void new_file_callback(GtkMenuItem *menu_item, MetaData* meta_data)
     gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook), TRUE);
     gtk_box_pack_start(GTK_BOX(box), source_object->scrolled_window, TRUE, TRUE, 0);
 
-//    GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-//    gtk_paned_pack2(GTK_PANED(vpaned), source_object->terminal, FALSE, FALSE);
-//    gtk_paned_set_position(GTK_PANED(vpaned), 10);
-
     gtk_box_pack_start(GTK_BOX(box), source_object->terminal, FALSE, FALSE, 0);
 
     status_align = gtk_alignment_new(1, 0, 0, 0);
@@ -58,18 +65,16 @@ void new_file_callback(GtkMenuItem *menu_item, MetaData* meta_data)
     statusbar_language = gtk_statusbar_new();
     statusbar_shell = gtk_statusbar_new();
     statusbar_font = gtk_statusbar_new();
+    statusbar_tab_width = gtk_statusbar_new();
 
     buffer = gtk_text_view_get_buffer(GTK_SOURCE_VIEW(source_object->textview));
     g_signal_connect(buffer, "changed", G_CALLBACK(update_statusbar_col_lines), statusbar_col_lines);
     g_signal_connect(buffer, "changed", G_CALLBACK(update_statusbar_language), statusbar_language);
 
-    //GtkWidget* sbutton = gtk_source_style_scheme_chooser_button_new();
-    //gtk_source_style_scheme_chooser_set_style_scheme(sbutton, meta_data->scheme);
-
     gtk_box_pack_start(GTK_BOX(statusbox), statusbar_language, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(statusbox), statusbar_shell, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(statusbox), statusbar_font, FALSE, FALSE, 0);
-    //gtk_box_pack_start(GTK_BOX(statusbox), sbutton, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(statusbox), statusbar_tab_width, FALSE, FALSE, 0);
     gtk_container_add(GTK_BOX(statusbox), status_align);
     gtk_box_pack_start(GTK_BOX(statusbox), statusbar_col_lines, FALSE, FALSE, 0);
 
@@ -80,6 +85,11 @@ void new_file_callback(GtkMenuItem *menu_item, MetaData* meta_data)
     gchar* font_msg = g_strdup_printf("Font: %s", pango_font_description_to_string(meta_data->font_desc));
     gtk_statusbar_push(statusbar_font, 0, font_msg);
     g_free(font_msg);
+
+    gint tab_width = gtk_source_view_get_tab_width(GTK_SOURCE_VIEW(source_object->textview));
+    gchar* tab_width_msg = g_strdup_printf("Tab width: %d", tab_width);
+    gtk_statusbar_push(statusbar_tab_width, 0, tab_width_msg);
+    g_free(tab_width_msg);
 
     g_signal_connect_object(buffer, "mark_set", G_CALLBACK(mark_set_callback), statusbar_col_lines, 0);
     gtk_box_pack_start(GTK_BOX(box), statusbox, FALSE, FALSE, 0);
@@ -725,7 +735,6 @@ void comment_callback(GtkMenuItem *menu_item, MetaData* meta_data)
         endM = tM;
     }
 
-    gtk_source_buffer_begin_not_undoable_action(buffer);
     while(gtk_text_iter_get_line(&begI)!=gtk_text_iter_get_line(&endI))
     {
         gtk_text_buffer_insert(buffer, &begI, comment, strlen(comment));
@@ -737,7 +746,6 @@ void comment_callback(GtkMenuItem *menu_item, MetaData* meta_data)
         gtk_text_buffer_move_mark(buffer, begM, &begI);
     }
     gtk_text_buffer_insert(buffer, &begI, comment, strlen(comment));
-    gtk_source_buffer_end_not_undoable_action(buffer);
 }
 
 void uncomment_callback(GtkMenuItem *menu_item, MetaData* meta_data)
@@ -814,39 +822,126 @@ void switch_case_sense_callback(GtkCheckButton* case_sense_btn, MetaData* meta_d
 
 void cancel_file_dlg_callback(GtkWidget* widget, MetaData* meta_data)
 {
-    printf("%d\n", meta_data->dial_data->dialog);
     gtk_window_close(meta_data->dial_data->dialog);
+    //free(meta_data->dial_data);
+}
+
+void forward_file_dlg_callback(GtkWidget* widget, MetaData* meta_data)
+{
+    FindDialog* dial_data = meta_data->dial_data;
+    add_find_entry(meta_data, dial_data);
+    gchar* search_text;
+    GtkTextSearchFlags flags;
+    GtkSourceView* text_view;
+    GtkSourceBuffer* buffer;
+    GtkTextMark* endM;
+    GtkTextIter sel_iter, begI, endI;
+
+    if(!meta_data->case_sense_option)
+        flags = GTK_TEXT_SEARCH_CASE_INSENSITIVE;
+    search_text = gtk_combo_box_text_get_active_text(dial_data->text_entry);
+    text_view = get_current_page_view(meta_data);
+    buffer = gtk_text_view_get_buffer(text_view);
+
+    endM = gtk_text_buffer_get_mark(buffer, "selection_bound");
+    gtk_text_buffer_get_iter_at_mark(buffer, &sel_iter, endM);
+
+    if(gtk_text_iter_forward_search(&sel_iter, search_text, flags, &begI, &endI, NULL))
+    {
+        gtk_text_buffer_select_range(buffer, &begI, &endI);
+        GtkTextMark* new_pos = gtk_text_buffer_get_mark(buffer, "selection_bound");
+        gtk_text_view_scroll_to_mark(text_view, new_pos, 0.0, 1, 0.0, 0.5);
+    }
+    else
+    {
+        if(gtk_text_iter_get_offset(&sel_iter)==0)
+        {
+            gchar* msg = g_strdup_printf("Not found:\"%s\"", search_text);
+            display_error_message(meta_data, msg);
+            g_free(msg);
+            return;
+        }
+        GtkTextIter home;
+        gtk_text_buffer_get_iter_at_offset(buffer, &home, 0);
+        gtk_text_buffer_place_cursor(buffer, &home);
+        forward_file_dlg_callback(NULL, meta_data);
+    }
+}
+
+void backward_file_dlg_callback(GtkWidget* widget, MetaData* meta_data)
+{
+    FindDialog* dial_data = meta_data->dial_data;
+    add_find_entry(meta_data, dial_data);
+    gchar* search_text;
+    GtkTextSearchFlags flags;
+    GtkSourceView* text_view;
+    GtkSourceBuffer* buffer;
+    GtkTextMark* begM;
+    GtkTextIter ins_iter, begI, endI;
+
+    if(!meta_data->case_sense_option)
+        flags = GTK_TEXT_SEARCH_CASE_INSENSITIVE;
+    search_text = gtk_combo_box_text_get_active_text(dial_data->text_entry);
+    text_view = get_current_page_view(meta_data);
+    buffer = gtk_text_view_get_buffer(text_view);
+
+    begM = gtk_text_buffer_get_mark(buffer, "insert");
+    gtk_text_buffer_get_iter_at_mark(buffer, &ins_iter, begM);
+
+    if(gtk_text_iter_backward_search(&ins_iter, search_text, flags, &begI, &endI, NULL))
+    {
+        gtk_text_buffer_select_range(buffer, &begI, &endI);
+        GtkTextMark* new_pos = gtk_text_buffer_get_mark(buffer, "insert");
+        gtk_text_view_scroll_to_mark(text_view, new_pos, 0.0, 1, 0.0, 0.5);
+    }
+    else
+    {
+        GtkTextIter end;
+        gtk_text_buffer_get_end_iter(buffer, &end);
+        if(gtk_text_iter_get_offset(&ins_iter)==gtk_text_iter_get_offset(&end))
+        {
+            gchar* msg = g_strdup_printf("Not found:\"%s\"", search_text);
+            display_error_message(meta_data, msg);
+            g_free(msg);
+            return;
+        }
+        gtk_text_buffer_place_cursor(buffer, &end);
+        backward_file_dlg_callback(NULL, meta_data);
+    }
 }
 
 void find_callback(GtkMenuItem *menu_item, MetaData* meta_data)
 {
-    FindDialog dial_data;
-    create_find_dlg(meta_data, &dial_data);
+    FindDialog* dial_data = (FindDialog*)malloc(sizeof(FindDialog));
+    create_find_dlg(meta_data, dial_data);
 
-    g_signal_connect (dial_data.dialog, "destroy",
+    GtkSourceBuffer* buffer = get_current_page_buffer(meta_data);
+    GtkTextIter home;
+    gtk_text_buffer_get_iter_at_offset(buffer, &home, 0);
+    gtk_text_buffer_place_cursor(buffer, &home);
+
+    g_signal_connect (dial_data->dialog, "destroy",
 		      G_CALLBACK (cancel_file_dlg_callback), meta_data);
 
-    g_signal_connect (dial_data.case_sense_chk, "toggled",
+    g_signal_connect (dial_data->case_sense_chk, "toggled",
                       G_CALLBACK (switch_case_sense_callback), meta_data);
 
-    g_signal_connect (dial_data.backward_btn, "toggled",
-                      G_CALLBACK (dummy_callback), meta_data);
+    g_signal_connect (dial_data->backward_btn, "clicked",
+                      G_CALLBACK (backward_file_dlg_callback), meta_data);
 
-    g_signal_connect (dial_data.forward_btn, "clicked",
-                      G_CALLBACK (dummy_callback), meta_data);
+    g_signal_connect (dial_data->forward_btn, "clicked",
+                      G_CALLBACK (forward_file_dlg_callback), meta_data);
 
-    g_signal_connect (dial_data.cancel_btn, "clicked",
+    g_signal_connect (dial_data->cancel_btn, "clicked",
                       G_CALLBACK (cancel_file_dlg_callback), meta_data);
 
-    g_signal_connect (dial_data.text_entry, "changed",
-                      G_CALLBACK (dummy_callback), meta_data);
+    //g_signal_connect (dial_data->text_entry, "changed",
+    //                  G_CALLBACK (dummy_callback), meta_data);
 
-    printf("%d\n", meta_data->dial_data->dialog);
     //g_signal_connect (app->findrepwin, "key_press_event",
     //                  G_CALLBACK (on_fr_keypress), meta_data);
 
-    gtk_widget_show (dial_data.dialog);
-    // gtk_widget_show_all (app->findrepwin);
+    gtk_widget_show (dial_data->dialog);
 }
 
 void replace_callback(GtkMenuItem *menu_item, MetaData* meta_data)
@@ -936,15 +1031,10 @@ gboolean compile_callback(GObject* menu_item, MetaData* meta_data)
 
     if(strcmp(filename, "Untitled")==0||tab_name[0]=='*')
     {
-        GtkDialogFlags flags = GTK_DIALOG_MODAL;
-        GtkWidget* dialog = gtk_message_dialog_new (meta_data->window,
-                                  flags,
-                                  GTK_MESSAGE_ERROR,
-                                  GTK_BUTTONS_CLOSE,
-                                  "File is not saved:");
-        gtk_dialog_run (GTK_DIALOG (dialog));
-        gtk_widget_destroy (dialog);
+        gchar* msg = g_strdup("File is not saved");
+        display_error_message(meta_data, msg);
         success = FALSE;
+        g_free(msg);
     }
     else
     {

@@ -4,6 +4,8 @@
 #include <gtk/gtk.h>
 #include "menu_objects.h"
 
+#define MAX_TAB_WIDTH 8
+
 GdkPixbuf* create_icon(const char* filename)
 {
     GdkPixbuf* icon;
@@ -22,11 +24,9 @@ GdkPixbuf* create_icon(const char* filename)
 
 FindDialog* create_find_dlg(MetaData* meta_data, FindDialog* dial_data)
 {
-    GtkWidget *vbox;            /* vbox container   */
+    GtkWidget *vbox;
     GtkWidget *frame1;
-    GtkWidget *frame2;
     GtkWidget *table;
-    GtkWidget *table2;
     GtkWidget *label;
     GtkWidget *hbtweak;
     GtkWidget *hbox;
@@ -74,9 +74,9 @@ FindDialog* create_find_dlg(MetaData* meta_data, FindDialog* dial_data)
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), dial_data->text_entry);
     gtk_table_attach_defaults (GTK_TABLE (table), dial_data->text_entry, 0, 2, 1, 2);
     gtk_table_set_row_spacing (GTK_TABLE (table), 1, 10);
-    /*for (i = 0; i < meta_data->find_entries_n; i++)
+    for (i = 0; i < meta_data->find_entries_n; i++)
         gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(dial_data->text_entry),
-                                        meta_data->find_entries[i]);*/
+                                        meta_data->find_entries[i]);
 
     dial_data->case_sense_chk = gtk_check_button_new_with_mnemonic ("Match case");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dial_data->case_sense_chk), meta_data->case_sense_option);
@@ -100,19 +100,72 @@ FindDialog* create_find_dlg(MetaData* meta_data, FindDialog* dial_data)
     dial_data->cancel_btn = gtk_button_new_with_label("Close");
 
     gtk_box_pack_end (GTK_BOX (hbox), dial_data->cancel_btn, FALSE, FALSE, 0);
-    gtk_box_pack_end (GTK_BOX (hbox), dial_data->backward_btn, FALSE, FALSE, 0);
     gtk_box_pack_end (GTK_BOX (hbox), dial_data->forward_btn, FALSE, FALSE, 0);
-    gtk_widget_show (dial_data->backward_btn);
+    gtk_box_pack_end (GTK_BOX (hbox), dial_data->backward_btn, FALSE, FALSE, 0);
     gtk_widget_show (dial_data->forward_btn);
+    gtk_widget_show (dial_data->backward_btn);
     gtk_widget_show (dial_data->cancel_btn);
 
     gtk_box_pack_end (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show (hbox);
 
     meta_data->dial_data = dial_data;
-    printf("%d\n", dial_data->dialog);
 
     return (dial_data);
+}
+
+gboolean entry_exists(MetaData* meta_data, gchar* entry)
+{
+    for(int i=0;i<meta_data->find_entries_n;++i)
+    {
+        if(strcmp(entry, meta_data->find_entries[i])==0)
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+void display_error_message(MetaData* meta_data, gchar* err_msg)
+{
+    GtkDialogFlags flags = GTK_DIALOG_MODAL;
+    GtkWidget* dialog = gtk_message_dialog_new (meta_data->window,
+                                  flags,
+                                  GTK_MESSAGE_ERROR,
+                                  GTK_BUTTONS_CLOSE,
+                                  err_msg);
+
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+}
+
+void add_find_entry(MetaData* meta_data, FindDialog* dial_data)
+{
+    gchar* entry = gtk_combo_box_text_get_active_text(dial_data->text_entry);
+    if(entry_exists(meta_data, entry))
+    {
+        return;
+    }
+    if(meta_data->find_entries_n!=MAX_FIND_ENTRIES)
+    {
+        for(int i=meta_data->find_entries_n;i>0;--i)
+        {
+            strcpy(meta_data->find_entries[i], meta_data->find_entries[i-1]);
+        }
+        strcpy(meta_data->find_entries[0], entry);
+        gtk_combo_box_text_prepend_text(dial_data->text_entry, entry);
+        meta_data->find_entries_n++;
+    }
+    else
+    {
+        for(int i=MAX_FIND_ENTRIES-1;i>0;--i)
+        {
+            strcpy(meta_data->find_entries[i], meta_data->find_entries[i-1]);
+        }
+        strcpy(meta_data->find_entries[0], entry);
+        gtk_combo_box_text_prepend_text(dial_data->text_entry, entry);
+        gtk_combo_box_text_remove(dial_data->text_entry, meta_data->find_entries_n);
+    }
 }
 
 GList* get_status_list(MetaData* meta_data, gint curr_page)
@@ -280,6 +333,31 @@ void apply_font(MetaData* meta_data)
       child_list = gtk_container_get_children(child_list->data);
       if (GTK_IS_TEXT_VIEW(child_list->data))
          gtk_widget_modify_font(child_list->data, meta_data->font_desc);
+    }
+}
+
+void apply_tab_width(MetaData* meta_data)
+{
+   GList* child_list;
+   GList* status_list;
+   GtkWidget* status_tab_width;
+   gchar* status_msg;
+   GtkWidget* curr_page;
+   int page_cnt = gtk_notebook_get_n_pages(GTK_NOTEBOOK(meta_data->notebook));
+
+   for (int i = 0; i < page_cnt; i++)
+    {
+      curr_page = gtk_notebook_get_nth_page(meta_data->notebook, i);
+      status_list = get_status_list(meta_data, i);
+      status_tab_width = status_list->next->next->next->data;
+      gtk_statusbar_pop(status_tab_width, 0);
+      status_msg = g_strdup_printf("Tab width: %d", meta_data->tab_width);
+      gtk_statusbar_push(status_tab_width, 0, status_msg);
+      g_free(status_msg);
+      child_list = gtk_container_get_children(GTK_CONTAINER(curr_page));
+      child_list = gtk_container_get_children(child_list->data);
+      if (GTK_IS_TEXT_VIEW(child_list->data))
+         gtk_source_view_set_tab_width(child_list->data, meta_data->tab_width);
     }
 }
 
@@ -467,14 +545,14 @@ void calc_lang_comment(MetaData* meta_data, gchar* comment)
     {
     	strcpy(comment, "--");
     }
-    if(strcmp(lang_name, "C")==0||strcmp(lang_name, "C++")==0||strcmp(lang_name, "Cg")==0||strcmp(lang_name, "C#")==0||strcmp(lang_name, "CUDA")==0||
+    if(strcmp(lang_name, "C")==0||strcmp(lang_name, "C++")==0||strcmp(lang_name, "C/ObjC Header")==0||strcmp(lang_name, "Cg")==0||strcmp(lang_name, "C#")==0||strcmp(lang_name, "CUDA")==0||
        strcmp(lang_name, "GLSL")==0||strcmp(lang_name, "F#")==0||strcmp(lang_name, "Go")==0||strcmp(lang_name, "Groovy")==0||strcmp(lang_name, "Java")==0||
        strcmp(lang_name, "JavaScript")==0||strcmp(lang_name, "Kotlin")==0||strcmp(lang_name, "OpenCL")==0||strcmp(lang_name, "Pascal")==0||strcmp(lang_name, "Rust")==0||
        strcmp(lang_name, "Scala")==0||strcmp(lang_name, "Swift")==0||strcmp(lang_name, "Vala")==0||strcmp(lang_name, "Verilog")==0)
     {
         strcpy(comment, "//");
     }
-    if(strcmp(lang_name, "Python 3")==0||strcmp(lang_name, "Julia")==0||strcmp(lang_name, "Makefile")==0||strcmp(lang_name, "Meson")==0||strcmp(lang_name, "Perl")==0||
+    if(strcmp(lang_name, "Python 3")==0||strcmp(lang_name, "Python")==0||strcmp(lang_name, "Julia")==0||strcmp(lang_name, "Makefile")==0||strcmp(lang_name, "Meson")==0||strcmp(lang_name, "Perl")==0||
        strcmp(lang_name, "PHP")==0||strcmp(lang_name, "R")==0||strcmp(lang_name, "Ruby")==0||strcmp(lang_name, "sh")==0||strcmp(lang_name, "YAML")==0)
     {
         strcpy(comment, "#");

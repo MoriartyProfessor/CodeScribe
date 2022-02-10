@@ -27,7 +27,7 @@ void *create_schemes_modes_submenu(WindowDependecies* win_dep, GtkWidget **s_men
     GtkWidget *tango_mi = gtk_radio_menu_item_new_with_label (group, "Tango");
     group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (tango_mi));
 
-    gtk_check_menu_item_set_active(kate_mi, TRUE);
+    gtk_check_menu_item_set_active(oblivion_mi, TRUE);
 
     schemes_menu = gtk_menu_new();
 
@@ -431,6 +431,33 @@ void *create_edit_menu(WindowDependecies* win_dep, MenuBar* menubar_obj, MetaDat
     menubar_obj->edit_menu->insert_date_mi = insert_date_mi;
 }
 
+void create_tab_width_menu(MetaData* meta_data, GtkWidget** twh_mi)
+{
+    GtkWidget* tab_width_menu;
+    GtkWidget* tab_width_head_mi;
+    GSList* group = NULL;
+    GtkWidget* tab_width_mis[MAX_TAB_WIDTH];
+
+    for(int i=0;i<MAX_TAB_WIDTH;++i)
+    {
+        gchar* label = g_strdup_printf("Tab width: %d", i+1);
+        tab_width_mis[i] = gtk_radio_menu_item_new_with_label (group, label);
+        group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (tab_width_mis[i]));
+        g_free(label);
+    }
+    gtk_check_menu_item_set_active(tab_width_mis[meta_data->tab_width-1], TRUE);
+    tab_width_menu = gtk_menu_new();
+
+    tab_width_head_mi = gtk_menu_item_new_with_label("Tab width");
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(tab_width_head_mi), tab_width_menu);
+    for(int i=0;i<MAX_TAB_WIDTH;++i)
+    {
+        gtk_menu_shell_append(GTK_MENU_SHELL(tab_width_menu), tab_width_mis[i]);
+        g_signal_connect(G_OBJECT(tab_width_mis[i]), "toggled", G_CALLBACK(tab_width_menu_callback), meta_data);
+    }
+    *twh_mi = tab_width_head_mi;
+}
+
 void *create_format_menu(WindowDependecies* win_dep, MenuBar* menubar_obj, MetaData* meta_data)
 {
     GList* group = NULL;
@@ -448,6 +475,7 @@ void *create_format_menu(WindowDependecies* win_dep, MenuBar* menubar_obj, MetaD
     GtkWidget* justify_right_mi;
     GtkWidget* justify_center_mi;
     GtkWidget* justify_fill_mi;
+    GtkWidget* tab_width_head_mi;
 
     GtkWidget *accel_group = win_dep->accel_group;
 
@@ -465,6 +493,7 @@ void *create_format_menu(WindowDependecies* win_dep, MenuBar* menubar_obj, MetaD
     gtk_check_menu_item_set_active(line_numbers_mi, TRUE);
     visualize_spaces_mi = gtk_check_menu_item_new_with_label("Display spaces as symbols");
     wrap_words_mi = gtk_check_menu_item_new_with_label("Text wrapping");
+    create_tab_width_menu(meta_data, &tab_width_head_mi);
 
     justify_left_mi = gtk_radio_menu_item_new_with_label(group, "Align Left");
     group = gtk_radio_menu_item_get_group(justify_left_mi);
@@ -483,6 +512,7 @@ void *create_format_menu(WindowDependecies* win_dep, MenuBar* menubar_obj, MetaD
     gtk_menu_shell_append(GTK_MENU_SHELL(format_menu), visualize_spaces_mi);
     gtk_menu_shell_append(GTK_MENU_SHELL(format_menu), highlight_line_mi);
     gtk_menu_shell_append(GTK_MENU_SHELL(format_menu), wrap_words_mi);
+    gtk_menu_shell_append(GTK_MENU_SHELL(format_menu), tab_width_head_mi);
     gtk_menu_shell_append(GTK_MENU_SHELL(format_menu), justify_smi);
     gtk_menu_shell_append(GTK_MENU_SHELL(justify_smenu), justify_left_mi);
     gtk_menu_shell_append(GTK_MENU_SHELL(justify_smenu), justify_center_mi);

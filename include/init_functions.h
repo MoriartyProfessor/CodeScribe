@@ -41,9 +41,9 @@ GtkWidget *create_menu_vbox(WindowDependecies* win_dep, MenuBar* menubar_obj, Me
     GtkWidget *notebook;
 
     vbox = gtk_vbox_new(FALSE, 0);
+    notebook = create_notebook(meta_data);
     menubar = create_menubar(win_dep, menubar_obj, meta_data);
     toolbar = create_toolbar(win_dep, meta_data);
-    notebook = create_notebook(meta_data);
 
     meta_data->notebook = notebook;
 

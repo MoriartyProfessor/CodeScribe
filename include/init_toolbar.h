@@ -114,7 +114,7 @@ GtkWidget *create_toolbar(WindowDependecies* win_dep, MetaData* meta_data)
         G_CALLBACK(save_file_callback), meta_data);
 
     g_signal_connect(G_OBJECT(saveAsTb), "clicked",
-        G_CALLBACK(save_file_callback), meta_data);
+        G_CALLBACK(save_as_file_callback), meta_data);
 
     g_signal_connect(G_OBJECT(closeTb), "clicked",
         G_CALLBACK(close_file_callback), meta_data);
