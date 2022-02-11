@@ -25,12 +25,15 @@
  - etc.
 
 ## Screenshots
-<a href='https://www.linkpicture.com/view.php?img=LPic6204de331eac81862643557'><img src='https://www.linkpicture.com/q/CS1_1.png' type='image' width='800'></a>
-<a href="https://www.linkpicture.com/view.php?img=LPic6204e2978409e1613655450"><img src="https://www.linkpicture.com/q/Screenshot-from-2022-02-10-15-01-25.png" type="image" width = '800'> </a>
-<a href='https://www.linkpicture.com/view.php?img=LPic6204de331eac81862643557'><img src='https://www.linkpicture.com/q/Screenshot-from-2022-02-10-14-41-52.png' type='image' width = '800'></a>
-<a href='https://www.linkpicture.com/view.php?img=LPic6204de331eac81862643557'><img src='https://www.linkpicture.com/q/CS2_1.png' type='image' width='800'> </a>
-<a href="https://www.linkpicture.com/view.php?img=LPic6204de331eac81862643557"><img src="https://www.linkpicture.com/q/CS4.png" type="image" width = '800'> </a>
-<a href="https://www.linkpicture.com/view.php?img=LPic6204de331eac81862643557"><img src="https://www.linkpicture.com/q/Screenshot-from-2022-02-10-14-39-52.png" type="image" width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS0.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS0.png' width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS1.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS1.png' width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS2.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS2.png' width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS3.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS3.png' width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS4.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS4.png' width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS5.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS5.png' width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS6.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS6.png' width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS7.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS7.png' width='800'></a>
+<a href='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS8.png'><img src='https://raw.githubusercontent.com/MoriartyProfessor/CodeScribe/main/screenshots/CS8.png' width='800'></a>
 ## Dependencies
  - gtk+-3.0
  - gtksourceview-3.0
