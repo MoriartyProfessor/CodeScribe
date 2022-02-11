@@ -6,7 +6,7 @@
  - New, Open, Close, Save, and Save as 
  - Copy, Cut, Paste and Select all
  - Multi-document as tabs 
- - Syntax Highlighting for dozens languages
+ - Syntax Highlighting for dozens of languages
  - Auto-Identation
  - Auto source language detection
  - Bracket matching
