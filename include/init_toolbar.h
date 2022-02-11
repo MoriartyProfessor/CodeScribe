@@ -30,8 +30,10 @@ GtkWidget *create_toolbar(WindowDependecies* win_dep, MetaData* meta_data)
     GtkWidget *runTb;
     GtkWidget *compileTb;
     GtkWidget *compile_and_runTb;
-    GtkWidget *search_bar;
     GtkWidget *sep4;
+    GtkWidget *search_Tb;
+    GtkWidget *goto_Tb;
+    GtkWidget *sep5;
     GtkWidget *aboutTb;
     GtkWidget *exitTb;
 
@@ -98,6 +100,15 @@ GtkWidget *create_toolbar(WindowDependecies* win_dep, MetaData* meta_data)
     sep4 = gtk_separator_tool_item_new();
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), sep4, -1);
 
+    search_Tb = gtk_tool_button_new(gtk_image_new_from_icon_name("system-search", ICON_SIZE), "Search");
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), search_Tb, -1);
+
+    goto_Tb = gtk_tool_button_new(gtk_image_new_from_icon_name("media-seek-forward", ICON_SIZE), "Go to line");
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), goto_Tb, -1);
+
+    sep5 = gtk_separator_tool_item_new();
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), sep5, -1);
+
     aboutTb = gtk_tool_button_new(gtk_image_new_from_icon_name("help-about", ICON_SIZE), "About");
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), aboutTb, -1);
 
@@ -142,6 +153,12 @@ GtkWidget *create_toolbar(WindowDependecies* win_dep, MetaData* meta_data)
 
     g_signal_connect(G_OBJECT(compile_and_runTb), "clicked",
         G_CALLBACK(compile_and_run_callback), meta_data);
+
+    g_signal_connect(G_OBJECT(search_Tb), "clicked",
+        G_CALLBACK(find_callback), meta_data);
+
+    g_signal_connect(G_OBJECT(goto_Tb), "clicked",
+        G_CALLBACK(goto_callback), meta_data);
 
     g_signal_connect(G_OBJECT(fontTb), "clicked",
         G_CALLBACK(font_settings_callback), meta_data);
